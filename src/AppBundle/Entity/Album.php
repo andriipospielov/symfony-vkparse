@@ -3,6 +3,7 @@
 namespace AppBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  * Album
@@ -21,12 +22,8 @@ class Album
      */
     private $id;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="person_id", type="string", length=255)
-     */
-    private $personId;
+
+
 
 
     /**
@@ -39,28 +36,83 @@ class Album
         return $this->id;
     }
 
+
     /**
-     * Set personId
+     * @ORM\ManyToOne(targetEntity="Person", inversedBy="albums")
+     * @ORM\JoinColumn(name="person_id", referencedColumnName="id")
+     */
+    private $person;
+
+
+
+    /**
+     * @ORM\OneToMany(targetEntity="Photo", mappedBy="album")
+     */
+    private $photos;
+
+    public function __construct()
+    {
+        $this->photos = new ArrayCollection();
+    }
+
+
+
+
+    /**
+     * Set person
      *
-     * @param string $personId
+     * @param \AppBundle\Entity\Person $person
      *
      * @return Album
      */
-    public function setPersonId($personId)
+    public function setPerson(\AppBundle\Entity\Person $person = null)
     {
-        $this->personId = $personId;
+        $this->person = $person;
 
         return $this;
     }
 
     /**
-     * Get personId
+     * Get person
      *
-     * @return string
+     * @return \AppBundle\Entity\Person
      */
-    public function getPersonId()
+    public function getPerson()
     {
-        return $this->personId;
+        return $this->person;
+    }
+
+    /**
+     * Add photo
+     *
+     * @param \AppBundle\Entity\Photo $photo
+     *
+     * @return Album
+     */
+    public function addPhoto(\AppBundle\Entity\Photo $photo)
+    {
+        $this->photos[] = $photo;
+
+        return $this;
+    }
+
+    /**
+     * Remove photo
+     *
+     * @param \AppBundle\Entity\Photo $photo
+     */
+    public function removePhoto(\AppBundle\Entity\Photo $photo)
+    {
+        $this->photos->removeElement($photo);
+    }
+
+    /**
+     * Get photos
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getPhotos()
+    {
+        return $this->photos;
     }
 }
-

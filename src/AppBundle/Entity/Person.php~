@@ -3,7 +3,6 @@
 namespace AppBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  * Person
@@ -75,38 +74,5 @@ class Person
     }
 
 
-
-    /**
-     * Add album
-     *
-     * @param \AppBundle\Entity\Album $album
-     *
-     * @return Person
-     */
-    public function addAlbum(\AppBundle\Entity\Album $album)
-    {
-        $this->albums[] = $album;
-
-        return $this;
-    }
-
-    /**
-     * Remove album
-     *
-     * @param \AppBundle\Entity\Album $album
-     */
-    public function removeAlbum(\AppBundle\Entity\Album $album)
-    {
-        $this->albums->removeElement($album);
-    }
-
-    /**
-     * Get albums
-     *
-     * @return \Doctrine\Common\Collections\Collection
-     */
-    public function getAlbums()
-    {
-        return $this->albums;
-    }
 }
+

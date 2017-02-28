@@ -4,9 +4,56 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "2144875c286d79367d1752c86e71281f",
-    "content-hash": "336da8bd545ff0d7889aa082f744d8de",
+    "hash": "901c56188723e2ff6e593c16e385177d",
+    "content-hash": "4fa9a8682716ad9489c271736af64ff5",
     "packages": [
+        {
+            "name": "bocharsky-bw/vkontakte-php-sdk",
+            "version": "v2.0.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/bocharsky-bw/vkontakte-php-sdk.git",
+                "reference": "d7e221ef3a0b02a97854af5e9b64e79e87989f6d"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/bocharsky-bw/vkontakte-php-sdk/zipball/d7e221ef3a0b02a97854af5e9b64e79e87989f6d",
+                "reference": "d7e221ef3a0b02a97854af5e9b64e79e87989f6d",
+                "shasum": ""
+            },
+            "require": {
+                "ext-curl": "*",
+                "ext-json": "*",
+                "php": ">=5.3.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Bocharsky Victor",
+                    "homepage": "https://github.com/bocharsky-bw"
+                }
+            ],
+            "description": "Vkontakte PHP SDK",
+            "homepage": "https://github.com/bocharsky-bw/vkontakte-php-sdk",
+            "keywords": [
+                "api",
+                "oauth",
+                "php",
+                "sdk",
+                "vk",
+                "vkontakte"
+            ],
+            "time": "2016-06-07 11:46:13"
+        },
         {
             "name": "doctrine/annotations",
             "version": "v1.2.7",
