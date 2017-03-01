@@ -25,9 +25,16 @@ class Person
     /**
      * @var string
      *
-     * @ORM\Column(name="vk_id", type="string", length=255)
+     * @ORM\Column(name="vk_id", type="string", length=255, nullable=true)
      */
     private $vkId;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="fullname", type="string", length=255, nullable=true)
+     */
+    private $fullname;
 
 
     /**
@@ -75,7 +82,6 @@ class Person
     }
 
 
-
     /**
      * Add album
      *
@@ -108,5 +114,29 @@ class Person
     public function getAlbums()
     {
         return $this->albums;
+    }
+
+    /**
+     * Set fullname
+     *
+     * @param string $fullname
+     *
+     * @return Person
+     */
+    public function setFullname($fullname)
+    {
+        $this->fullname = $fullname;
+
+        return $this;
+    }
+
+    /**
+     * Get fullname
+     *
+     * @return string
+     */
+    public function getFullname()
+    {
+        return $this->fullname;
     }
 }

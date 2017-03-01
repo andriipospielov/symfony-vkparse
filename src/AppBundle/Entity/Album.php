@@ -22,8 +22,19 @@ class Album
      */
     private $id;
 
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="vk_id", type="string", length=255, nullable=true)
+     */
+    private $vkId;
 
-
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="title", type="string", length=255, nullable=true)
+     */
+    private $title;
 
 
     /**
@@ -44,7 +55,6 @@ class Album
     private $person;
 
 
-
     /**
      * @ORM\OneToMany(targetEntity="Photo", mappedBy="album")
      */
@@ -54,8 +64,6 @@ class Album
     {
         $this->photos = new ArrayCollection();
     }
-
-
 
 
     /**
@@ -114,5 +122,53 @@ class Album
     public function getPhotos()
     {
         return $this->photos;
+    }
+
+    /**
+     * Set vkId
+     *
+     * @param string $vkId
+     *
+     * @return Album
+     */
+    public function setVkId($vkId)
+    {
+        $this->vkId = $vkId;
+
+        return $this;
+    }
+
+    /**
+     * Get vkId
+     *
+     * @return string
+     */
+    public function getVkId()
+    {
+        return $this->vkId;
+    }
+
+    /**
+     * Set title
+     *
+     * @param string $title
+     *
+     * @return Album
+     */
+    public function setTitle($title)
+    {
+        $this->title = $title;
+
+        return $this;
+    }
+
+    /**
+     * Get title
+     *
+     * @return string
+     */
+    public function getTitle()
+    {
+        return $this->title;
     }
 }

@@ -28,7 +28,12 @@ class Photo
      */
     private $imageFullname;
 
-
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="vk_id", type="string", length=255, nullable=true)
+     */
+    private $vkId;
 
     /**
      * Get id
@@ -93,5 +98,29 @@ class Photo
     public function getAlbum()
     {
         return $this->album;
+    }
+
+    /**
+     * Set vkId
+     *
+     * @param string $vkId
+     *
+     * @return Photo
+     */
+    public function setVkId($vkId)
+    {
+        $this->vkId = $vkId;
+
+        return $this;
+    }
+
+    /**
+     * Get vkId
+     *
+     * @return string
+     */
+    public function getVkId()
+    {
+        return $this->vkId;
     }
 }
