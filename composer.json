@@ -24,7 +24,8 @@
         "incenteev/composer-parameter-handler": "^2.0",
         "twig/twig": "^1.0||^2.0",
         "doctrine/doctrine-migrations-bundle": "^1.2",
-        "bocharsky-bw/vkontakte-php-sdk": "^2.0"
+        "bocharsky-bw/vkontakte-php-sdk": "^2.0",
+        "php-amqplib/rabbitmq-bundle": "^1.12"
     },
     "require-dev": {
         "sensio/generator-bundle": "^3.0",

@@ -8,21 +8,18 @@ use Symfony\Component\Console\Input\InputDefinition;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-//registring namespaces for entities
+// namespaces for entities
 use AppBundle\Entity\Person;
 use AppBundle\Entity\Album;
 use AppBundle\Entity\Photo;
-//registering VK API
-use \BW\Vkontakte as Vk;
 
 class VkGetAlbumsCommand extends ContainerAwareCommand
 {
     protected function configure()
     {
         $this
-            ->setName('vk:getAlbums')
-            ->setDescription('--id=foobar  Looks up for user whose vk id equals foobar'
-                . PHP_EOL . '--csv=barbaz Specify csv file location (in this case barbaz) which contains users ids and looks up for them')
+            ->setName('vk:get')
+            ->setDescription('--id=foobar for specific id, --csv=barbaz to pass csv file\'s fullname which contains users\' ids ')
             ->setDefinition(
                 new InputDefinition(array(
                     new InputOption('id', 'i', InputOption::VALUE_REQUIRED),
@@ -32,113 +29,101 @@ class VkGetAlbumsCommand extends ContainerAwareCommand
             );;
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    private function iterateHelper($userVkId)
     {
-//        TODO:refactor all of beyond
+        $logger = $this->getContainer()->get('logger');
 
         $doctrine = $this->getContainer()->get('doctrine');
-        $em = $doctrine-> getManager();
+        $em = $doctrine->getManager();
+        $vk = $this->getContainer()->get('vk_service');
 
-
-
-        $userVkId = $input->getOption('id');
-
-        $vk = new Vk([
-            'client_id' => '5900438',
-            'client_secret' => 'OwEKI1Wt9Xmhi3LgDmSt',
-
-        ]);
-        $userVkArray = $vk->api('users.get', [
+        $personResponseArray = $vk->api(
+            'users.get', [
             'user_id' => $userVkId,
-        ])[0];
-        $person = new Person();
-        $person->setVkId($userVkId);
-        $person->setFullname($userVkArray['first_name'] . ' ' . $userVkArray['last_name']);
-        $em->persist($person);
+        ]);
+        if (array_key_exists('error', $personResponseArray)
+            OR array_key_exists('deactivated', $personResponseArray[0])
+            OR $personResponseArray[0]['first_name'] == 'DELETED'
+        ) {
+            echo("ID $userVkId is not a valid user");
+            $logger->info("ID $userVkId is not a valid user");
+            return false;
+        }
+        $personResponseArray = end($personResponseArray);
 
-
-        $albums = $vk->api('photos.getAlbums', [
-            'owner_id' => $userVkId,
-        ])['items'];
-        foreach ($albums as $item) {
-            $album = new Album();
-            $album->setVkId($item['id']);
-            $album->setTitle($item['title']);
-            $album->setPerson($person);
-            $em->persist($album);
-
-            $photosArray = $vk->api('photos.get', [
-                'owner_id' => $person->getVkId(),
-                'album_id' => $album->getVkId(),
-
-            ])['items'];
-            foreach ($photosArray as $item) {
-                $photo = new Photo();
-                $photo->setVkId($item['id']);
-                $photo->setAlbum($album);
-
-//               TODO: replace this file-downloading mess with S3 with good code
-                $savingPath = '/home/andrii/vkpics/' . $person->getVkId() .
-                    '/' . $album->getVkId();
-
-
-
-
-//                $savingPath = '/home/andrii/vkpics/' . $person->getVkId() .
-//                    '/' . $album->getVkId() . '/';
-
-
-
-                if (!file_exists($savingPath) ){
-                    mkdir($savingPath, 0777, true);
-                }
-
-                $photo->setImageFullname($savingPath. '/'.$item['id']);
-                $em->persist($photo);
-
-
-                file_put_contents($photo->getImageFullname(), fopen($item['photo_604'], 'r'));
-
-            }
-
-
+        $repo = $doctrine->getRepository('AppBundle:Person');
+        $person = $repo->findOneByvkId($personResponseArray['id']);
+        if (!$person) {
+            $person = new Person();
+            $person->setVkId($personResponseArray['id']);
+            $person->setFullname($personResponseArray['first_name'] . ' ' . $personResponseArray['last_name']);
+            $em->persist($person);
         }
 
+        $albumsResponseArray = $vk->api('photos.getAlbums', [
+            'owner_id' => $person->getVkId(),
+        ])['items'] OR $logger->info("User with id $userVkId does not have accessible albums");
 
-        $em->flush();
+        foreach ($albumsResponseArray as $item) {
+            $repo = $doctrine->getRepository('AppBundle:Album');
+            $album = $repo->findOneByvkId($item['id']);
+            if (!$album) {
+                $album = new Album();
+                $album->setVkId($item['id']);
+                $album->setTitle($item['title']);
+                $album->setPerson($person);
+                $em->persist($album);
+            }
 
+            $photosResponseArray = $vk->api('photos.get', [
+                'owner_id' => $person->getVkId(),
+                'album_id' => $album->getVkId(),
+                'photo_sizes' => 1,
+            ])['items'];
 
-        $output->writeln('Job done!' . PHP_EOL);
+            foreach ($photosResponseArray as $value) {
 
+                $repo = $doctrine->getRepository('AppBundle:Photo');
+                $photo = $repo->findOneByvkId($value['id']);
+                if (!$photo) {
+                    $photo = new Photo();
+                    $photo->setVkId($value['id']);
+                    $photo->setAlbum($album);
+                    $em->persist($photo);
+                } else {
+                    continue;
+                }
+                $pathPrefix = '/home/andrii/vkpics/';
 
-        /* $argument = $input->getArgument('argument');
-         $output->writeln('starting Doctrine test...'.PHP_EOL);
+//               TODO: replace this file-downloading mess with S3 with good code
+                $savingPath = $pathPrefix . $person->getVkId() .
+                    '/' . $album->getVkId();
 
-         $person = new Person();
-         $person->setVkId('id13666');
+                $msg = array('directory' => $savingPath, 'filename' => $value['id'], 'url' => end($value['sizes'])['src']);
+                $this->getContainer()->get('old_sound_rabbit_mq.download_picture_producer')->publish(serialize($msg));
 
-         $album = new Album();
-         $album->setPerson($person);
+                $photo->setImageFullname($savingPath . '/' . $value['id']);
+                $em->flush();
 
-         $photo = new Photo();
-         $photo->setImageFullname('imagefullname');
-         $photo->setAlbum($album);
-
-         $doctrine = $this->getContainer()->get('doctrine');
-         $output->writeln('initiating Doctrine...'.PHP_EOL);
-         $em = $doctrine-> getManager();
-         $output->writeln('initiating Manager...'.PHP_EOL);
-         $em->persist($person);
-         $output->writeln('persist person...'.PHP_EOL);
-         $em->persist($album);
-         $output->writeln('persist album...'.PHP_EOL);
-         $em->persist($photo);
-         $output->writeln('persist photo...'.PHP_EOL);
-         $em->flush();
-         $output->writeln('flush...'.PHP_EOL);
-         $output->writeln('done...'.PHP_EOL);*/
-
-
+            }
+        }
+        return true;
     }
 
+    protected function execute(InputInterface $input, OutputInterface $output)
+    {
+        if ($input->getOption('id')) {
+            $userVkId = $input->getOption('id');
+            $this->iterateHelper($userVkId);
+        }
+        if ($input->getOption('csv')) {
+            $csvFile = $input->getOption('csv');
+            $f = fopen($csvFile, 'r');
+            $idsArray = fgetcsv($f);
+            array_walk($idsArray, array($this, 'iterateHelper'));
+        }
+
+        $output->writeln('Done!' . PHP_EOL);
+
+    }
 }
