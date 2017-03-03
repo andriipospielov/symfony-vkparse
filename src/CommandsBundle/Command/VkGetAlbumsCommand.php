@@ -19,11 +19,11 @@ class VkGetAlbumsCommand extends ContainerAwareCommand
     {
         $this
             ->setName('vk:get')
-            ->setDescription('--id=foobar for specific id, --csv=barbaz to pass csv file\'s fullname which contains users\' ids ')
+            ->setDescription('Downloads albums for given album ids, see help page')
             ->setDefinition(
                 new InputDefinition(array(
-                    new InputOption('id', 'i', InputOption::VALUE_REQUIRED),
-                    new InputOption('csv', 'c', InputOption::VALUE_REQUIRED),
+                    new InputOption('id', 'i', InputOption::VALUE_REQUIRED, '--id=foobar for specific id'),
+                    new InputOption('csv', 'c', InputOption::VALUE_REQUIRED, '--csv=barbaz to pass csv file\'s fullname which contains users\' ids'),
 
                 ))
             );;
@@ -57,12 +57,18 @@ class VkGetAlbumsCommand extends ContainerAwareCommand
             $person = new Person();
             $person->setVkId($personResponseArray['id']);
             $person->setFullname($personResponseArray['first_name'] . ' ' . $personResponseArray['last_name']);
-            $em->persist($person);
+
         }
 
         $albumsResponseArray = $vk->api('photos.getAlbums', [
             'owner_id' => $person->getVkId(),
-        ])['items'] OR $logger->info("User with id $userVkId does not have accessible albums");
+        ])['items'];
+        if (!$albumsResponseArray) {
+            echo "User $userVkId does not have accessible albums" . PHP_EOL;
+            $logger->info("User $userVkId does not have accessible albums");
+            return false;
+        }
+        $em->persist($person);
 
         foreach ($albumsResponseArray as $item) {
             $repo = $doctrine->getRepository('AppBundle:Album');
@@ -93,7 +99,7 @@ class VkGetAlbumsCommand extends ContainerAwareCommand
                 } else {
                     continue;
                 }
-                $pathPrefix = '/home/andrii/vkpics/';
+                $pathPrefix = '~/vkpics/';
 
 //               TODO: replace this file-downloading mess with S3 with good code
                 $savingPath = $pathPrefix . $person->getVkId() .
